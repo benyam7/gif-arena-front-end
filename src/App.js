@@ -7,9 +7,12 @@ const { SystemProgram, Keypair } = web3;
 import twitterLogo from "./assets/twitter-logo.svg";
 import "./App.css";
 import idl from "./idl.json";
+import kp from "./keypair.json";
 
 // create a keypair for the account that will hold the GIF data.
-let baseAccount = Keypair.generate();
+const arr = Object.values(kp._keypair.secretKey);
+const secret = new Uint8Array(arr);
+const baseAccount = web3.Keypair.fromSecretKey(secret);
 
 // get programId from idl file
 let programId = new PublicKey(idl.metadata.address);
