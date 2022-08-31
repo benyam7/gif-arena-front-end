@@ -116,6 +116,29 @@ const App = () => {
     return provider;
   };
 
+  const createGifAccount = async () => {
+    try {
+      const provider = getProvider();
+      const program = new Program(idl, programId, provider);
+      console.log("ping");
+      await program.rpc.startStuffOff({
+        accounts: {
+          baseAccount: baseAccount.publicKey,
+          user: provider.wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+        },
+        signers: [baseAccount],
+      });
+      console.log(
+        "creadted a new Base Account w/address: ",
+        baseAccount.publicKey.toString()
+      );
+      await getGifList();
+    } catch (error) {
+      console.log("Error in createGifAccount: ", error);
+    }
+  };
+
   const renderNotConnectedContainer = () => (
     <button
       className="cta-button connect-wallet-button"
@@ -126,36 +149,50 @@ const App = () => {
   );
 
   const renderConnectedContainer = () => {
-    return (
-      <div className="connected-container">
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            sendGif();
-          }}
-        >
-          <input
-            onChange={(event) => {
-              const { value } = event.target;
-              setGifInputValue(value);
-            }}
-            value={gifInputValue}
-            type="text"
-            placeholder="Enter gif link!"
-          />
-          <button type="submit" className="cta-button submit-gif-button">
-            Submit
+    // if gifList is null, i.e it means the program account hasn't been intitilized.
+    if (gifList === null) {
+      return (
+        <div className="connected-container">
+          <button
+            className="cta-button submit-gif-button"
+            onClick={createGifAccount}
+          >
+            Do One-Time Initilization For GIF Program Account
           </button>
-        </form>
-        <div className="gif-grid">
-          {gifList.map((gif) => (
-            <div className="gif-item" key={gif}>
-              <img src={gif} alt={gif} />
-            </div>
-          ))}
         </div>
-      </div>
-    );
+      );
+    } else {
+      return (
+        <div className="connected-container">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              sendGif();
+            }}
+          >
+            <input
+              onChange={(event) => {
+                const { value } = event.target;
+                setGifInputValue(value);
+              }}
+              value={gifInputValue}
+              type="text"
+              placeholder="Enter gif link!"
+            />
+            <button type="submit" className="cta-button submit-gif-button">
+              Submit
+            </button>
+          </form>
+          <div className="gif-grid">
+            {gifList.map((item, index) => (
+              <div className="gif-item" key={index}>
+                <img src={item.gifLink} alt={gif} />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
   };
 
   useEffect(() => {
