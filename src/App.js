@@ -1,6 +1,30 @@
+import { useEffect, useState } from "react";
+import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
+import { Program, Provider, web3 } from "@project-serum/anchor";
+// SystemProgram is a reference to the Solana runtime
+const { SystemProgram, Keypair } = web3;
+
 import twitterLogo from "./assets/twitter-logo.svg";
 import "./App.css";
-import { useEffect, useState } from "react";
+import idl from "./idl.json";
+
+// create a keypair for the account that will hold the GIF data.
+let baseAccount = Keypair.generate();
+
+// get programId from idl file
+let programId = new PublicKey(idl.metadata.address);
+
+// set our network to devnet
+const network = clusterApiUrl("devnet");
+
+// controls how we wanna ack when a trnsaction is "done"
+// basicaly we choose when to receive confirmation, when our transaction has succeeded.
+// we can wait till one node approves it: "processed" or
+// we can wait till the whole Solana chain to acknowledge it : "finalized" in this case.
+
+const opts = {
+  preflightCommitment: "processed",
+};
 
 // Constants
 const TWITTER_HANDLE = "benyam_7";
@@ -64,6 +88,34 @@ const App = () => {
     }
   };
 
+  const getGifList = async () => {
+    try {
+      const provider = getProvider();
+      const program = new Program(idl, programId, provider);
+      const account = await program.account.baseAccount.fetch(
+        baseAccount.publicKey
+      );
+
+      console.log("Got the account", account);
+      setGifList(account.gifList);
+    } catch (error) {
+      console.log("Error in getGifList: ", error);
+      setGifList(null);
+    }
+  };
+
+  // creates a 1provider` which is an autheticated connection to solana
+  const getProvider = () => {
+    const connection = new Connection(network, opts.preflightCommitment);
+    const provider = new Provider(
+      connection,
+      window.solana,
+      opts.preflightCommitment
+    );
+
+    return provider;
+  };
+
   const renderNotConnectedContainer = () => (
     <button
       className="cta-button connect-wallet-button"
@@ -121,7 +173,7 @@ const App = () => {
   useEffect(() => {
     if (walletAddress) {
       console.log("Fetching gif list...");
-      setGifList(TEST_GIFS);
+      getGifList();
     }
   }, [walletAddress]);
   return (
