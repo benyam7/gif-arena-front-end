@@ -81,8 +81,23 @@ const App = () => {
   const sendGif = async () => {
     if (gifInputValue.length) {
       console.log("Gif", gifInputValue);
-      setGifList([...gifList, gifInputValue]);
+
       setGifInputValue("");
+      try {
+        const provider = getProvider();
+        const program = new Program(idl, programId, provider);
+        await program.rpc.addGif(gifInputValue, {
+          accounts: {
+            baseAccount: baseAccount.publicKey,
+            user: provider.wallet.publicKey,
+          },
+        });
+        console.log("GIF successfully sent to program", gifInputValue);
+
+        await getGifList();
+      } catch (error) {
+        console.log("Error in sendGif: ", error);
+      }
     } else {
       console.log("empty");
     }
@@ -186,7 +201,7 @@ const App = () => {
           <div className="gif-grid">
             {gifList.map((item, index) => (
               <div className="gif-item" key={index}>
-                <img src={item.gifLink} alt={gif} />
+                <img src={item.gifLink} alt={item.gifLink} />
               </div>
             ))}
           </div>
